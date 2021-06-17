@@ -34,29 +34,28 @@ camera = PiCamera()
 camera.rotation = 270
 
 curr_time = time()
-file_name = f'{curr_time:.0f}_data.csv'
-logging.debug(file_name)
 
-with open('data/' + file_name, 'w', newline='') as f:
-    data_writer = writer(f)
-    data_writer.writerow(['Time','Accel X','Accel Y','Accel Z'])
-
-    LED(255)
-    camera.resolution = (1280,720)
-    camera.framerate = 60  #15ms frames
-    camera.start_preview()
-    #Use this to convert to MP4 ffmpeg -framerate 60 -i video.h264  -c copy video5.mp4
-    try:
-        camera.start_recording(f'video/{curr_time:.0f}.h264',format='h264',bitrate=2000000)
-        LED_Indications(GREEN) #if the recording works, show green
-    except PiCameraError:
-        LED_Indications(RED) #if the recording fails, show red
+LED(255)
+camera.resolution = (1280,720)
+camera.framerate = 60  #15ms frames
+camera.start_preview()
+#Use this to convert to MP4 ffmpeg -framerate 60 -i video.h264  -c copy video5.mp4
+try:
+    camera.start_recording(f'video/{curr_time:.0f}.h264',format='h264',bitrate=2000000)
+    LED_Indications(GREEN) #if the recording works, show green
+except PiCameraError:
+    LED_Indications(RED) #if the recording fails, show red
 
 
-    while True: #change conditional latter *****************
-        start_time = time()
-        end_time = start_time + REC_TIME_SEC
-        blink_timer = 0
+while True: #change conditional latter *****************
+    start_time = time()
+    end_time = start_time + REC_TIME_SEC
+    blink_timer = 0
+
+    with open(f'data/{curr_time:.0f}_data.csv', 'w', newline='') as f:
+        data_writer = writer(f)
+        data_writer.writerow(['Time','Accel X','Accel Y','Accel Z'])
+
         while (curr_time < end_time):
             #camera.annotate_text = "annotation #%s" % i
             raw = sense.get_accelerometer_raw()
@@ -70,6 +69,7 @@ with open('data/' + file_name, 'w', newline='') as f:
                 LED_Indications(NONE) #turn off the green LED unless it is the fith reading
                 blink_timer += 1
         camera.split_recording(f'video/{curr_time:.0f}.h264') #start recording in a new file
-    camera.stop_recording()
-    camera.stop_preview()
-    LED(0)
+    
+camera.stop_recording()
+camera.stop_preview()
+LED(0)
