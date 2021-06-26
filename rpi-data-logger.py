@@ -5,6 +5,28 @@ from time import time
 from csv import writer
 import math
 import logging
+import pygame
+import sys
+
+pygame.init()
+sur_obj=pygame.display.set_mode((400,300))
+pygame.display.set_caption("Keyboard_Input")
+
+
+def ready_to_start():
+    for eve in pygame.event.get():
+        if eve.type==pygame.KEYDOWN:
+            if eve.key == pygame.K_UP:
+                return True
+    return False
+
+def ready_to_exit():      
+    for eve in pygame.event.get():
+        if eve.type==pygame.KEYDOWN:
+            if eve.key == pygame.K_DOWN:
+                ready_to_exit.exit_code = True
+    print(ready_to_exit.exit_code)
+    return ready_to_exit.exit_code
 
 def LED(Brightness):
     e = [Brightness, Brightness, Brightness]
@@ -32,6 +54,12 @@ SAMPLES_PER_SEC = 120
 sense = SenseHat()
 camera = PiCamera()
 camera.rotation = 270
+ready_to_exit.exit_code = False
+
+LED_Indications(BLUE)
+#while not ready_to_start():
+#    print("Waiting")
+#    sleep(1)
 
 curr_time = time()
 
@@ -47,7 +75,7 @@ except PiCameraError:
     LED_Indications(RED) #if the recording fails, show red
 
 
-while True: #change conditional latter *****************
+while not ready_to_exit():
     start_time = time()
     end_time = start_time + REC_TIME_SEC
     blink_timer = 0
@@ -56,12 +84,12 @@ while True: #change conditional latter *****************
         data_writer = writer(f)
         data_writer.writerow(['Time','Accel X','Accel Y','Accel Z'])
 
-        while (curr_time < end_time):
+        while (curr_time < end_time) and not ready_to_exit():
             #camera.annotate_text = "annotation #%s" % i
             raw = sense.get_accelerometer_raw()
             curr_time = time()
-            camera.annotate_text = "Sec:{sec:.3f}".format(sec = (curr_time-start_time)) + " x: {x:.2f}, y: {y:.2f}, z: {z:.2f}".format(**raw)
-            data_writer.writerow([round((curr_time-start_time), 3), round(raw["x"], 2), round(raw["y"], 2), round(raw["z"], 2)])
+            camera.annotate_text = "Sec:{sec:.3f}".format(sec = curr_time) + " x: {x:.2f}, y: {y:.2f}, z: {z:.2f}".format(**raw)
+            data_writer.writerow([round(curr_time, 3), round(raw["x"], 2), round(raw["y"], 2), round(raw["z"], 2)])
             if blink_timer >= 5:
                 LED_Indications(GREEN)
                 blink_timer = 0 #every five readings, blink a green LED
@@ -73,3 +101,5 @@ while True: #change conditional latter *****************
 camera.stop_recording()
 camera.stop_preview()
 LED(0)
+pygame.quit()
+sys.exit()
