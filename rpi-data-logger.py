@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 from sense_hat import SenseHat
 from picamera import PiCamera
 from time import sleep
